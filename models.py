@@ -24,6 +24,9 @@ class Objekat(Base):
     naziv = Column(String)
     id_gradilista = Column(Integer, ForeignKey('gradilista.id'))
 
+    spratovi = relationship("Sprat")
+    gradiliste = relationship("Gradiliste", foreign_keys=[id_gradilista])
+
 
 class Sprat(Base):
     __tablename__ = 'spratovi'
@@ -31,6 +34,8 @@ class Sprat(Base):
     id = Column(Integer, primary_key=True)
     br_sprata = Column(Integer)
     id_objekta = Column(Integer, ForeignKey('objekti.id'))
+
+    objekat = relationship("Objekat", back_populates="spratovi", foreign_keys=[id_objekta])
 
 
 class Zaposleni(Base):
@@ -99,6 +104,8 @@ class NUD(Base):
     cena_izrade = Column(Numeric(scale=2))
     jedinicna_plata = Column(Numeric(scale=2))
 
+    potreban_materijal = relationship("PotrebanMaterijal", back_populates="NUD")
+
 
 class RobaUMagacinu(Base):
     __tablename__ = 'roba_u_magacinu'
@@ -120,7 +127,7 @@ class PotrebanMaterijal(Base):
     id_nud = Column(Integer, ForeignKey('NUD.id'), primary_key=True)
 
     roba = relationship("Roba")
-    NUD = relationship("NUD")
+    NUD = relationship("NUD", back_populates="potreban_materijal")
 
     kolicina = Column(Numeric(scale=2))
     broj_jedinica = Column(Integer)

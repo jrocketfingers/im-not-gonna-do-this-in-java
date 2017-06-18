@@ -36,6 +36,14 @@ class SUT:
         return True
 
     def unesi_sprat(self, br_sprata, id_objekat):
+        objekat = session.query(Objekat).get(id_objekat)
+        if(len(objekat.spratovi) > 0):
+            max_sprat = max([sprat.id for sprat in objekat.spratovi])
+
+            if(br_sprata > (max_sprat + 1)):
+                return -1
+        elif br_sprata != 0:
+            return -1
         sprat = Sprat(br_sprata=br_sprata, id_objekta=id_objekat)
         session.add(sprat)
         session.flush()
@@ -185,11 +193,16 @@ class SUT:
         zaposleni.id_magacin = None
 
     def zaposleni_zaduzuje_opremu(self, id_zaposlenog_koji_zaduzuje, id_magacin, id_roba, datum_zaduzenja, napomena):
+        roba_u_magacinu = session.query(RobaUMagacinu).get((id_roba, id_magacin))
+        if roba_u_magacinu.broj_jedinica == 0:
+            return -1
+
         zaduzenje = ZaduzenjeOpreme(id_zaposlenog=id_zaposlenog_koji_zaduzuje,
                                     id_magacina=id_magacin,
                                     id_robe=id_roba,
                                     datum_zaduzenja=datum_zaduzenja,
                                     napomena=napomena)
+
         session.add(zaduzenje)
         session.flush()
         return zaduzenje.id
@@ -197,6 +210,8 @@ class SUT:
     def zaposleni_razduzuje_opremu(self, id_zaduzenja_opreme, datum_razduzenja):
         zaduzenje = session.query(ZaduzenjeOpreme).filter_by(id=id_zaduzenja_opreme).first()
         zaduzenje.datum_razduzenja = datum_razduzenja
+
+        return 1
 
     def unesi_normu_ugradnog_dela(self, naziv, cena_izrade, jedinicna_plata_radnika):
         nud = NUD(naziv=naziv, cena_izrade=cena_izrade, jedinicna_plata=jedinicna_plata_radnika)
@@ -253,9 +268,9 @@ class SUT:
 
             zaposleni = zaposleni_radi_na_poslu.zaposleni
 
-            zaposleni.ukupan_isplacen_iznos += formula_za_isplatu(zaposleni.prosecna_ocena,
-                                                                  dana_na_poslu,
-                                                                  trajanje_posla,
+            zaposleni.ukupan_isplacen_iznos += formula_za_isplatu(zaposleni.prosecna_ocena or 10,
+                                                                  Decimal(dana_na_poslu),
+                                                                  Decimal(trajanje_posla),
                                                                   plata)
 
     def zaposleni_radi_na_poslu(self, id_zaposleni, id_posao, datum_pocetka):
